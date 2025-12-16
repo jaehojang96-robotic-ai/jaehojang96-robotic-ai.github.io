@@ -10,162 +10,99 @@
 
 The state vector contains the quaternion representation of orientation and gyroscope bias estimates:
 
-\[
-\mathbf{x}_k = \begin{bmatrix} q_0 \\ q_1 \\ q_2 \\ q_3 \\ b_x \\ b_y \\ b_z \end{bmatrix}_{7 \times 1}
-\]
+$$\mathbf{x}_k = \begin{bmatrix} q_0 \\ q_1 \\ q_2 \\ q_3 \\ b_x \\ b_y \\ b_z \end{bmatrix}_{7 \times 1}$$
 
 Where:
-- **Quaternion** \(\mathbf{q} = [q_0, q_1, q_2, q_3]^T\) (scalar-first convention): Represents 3D rotation
-  - \(q_0\) is the scalar part (related to rotation angle)
-  - \([q_1, q_2, q_3]^T\) is the vector part (rotation axis)
-  - Normalized constraint: \(q_0^2 + q_1^2 + q_2^2 + q_3^2 = 1\)
+- **Quaternion** $\mathbf{q} = [q_0, q_1, q_2, q_3]^T$ (scalar-first convention): Represents 3D rotation
+  - $q_0$ is the scalar part (related to rotation angle)
+  - $[q_1, q_2, q_3]^T$ is the vector part (rotation axis)
+  - Normalized constraint: $q_0^2 + q_1^2 + q_2^2 + q_3^2 = 1$
 
-- **Gyro Bias** \(\mathbf{b} = [b_x, b_y, b_z]^T\): Accounts for gyroscope constant bias
+- **Gyro Bias** $\mathbf{b} = [b_x, b_y, b_z]^T$: Accounts for gyroscope constant bias
 
 ### 1.2 Quaternion Properties
 
 **Quaternion Multiplication** (needed for rotation composition):
 
-\[
-\mathbf{q}_1 \otimes \mathbf{q}_2 = \begin{bmatrix} 
-q_{1,0}q_{2,0} - q_{1,1}q_{2,1} - q_{1,2}q_{2,2} - q_{1,3}q_{2,3} \\
-q_{1,0}q_{2,1} + q_{1,1}q_{2,0} + q_{1,2}q_{2,3} - q_{1,3}q_{2,2} \\
-q_{1,0}q_{2,2} - q_{1,1}q_{2,3} + q_{1,2}q_{2,0} + q_{1,3}q_{2,1} \\
-q_{1,0}q_{2,3} + q_{1,1}q_{2,2} - q_{1,2}q_{2,1} + q_{1,3}q_{2,0}
-\end{bmatrix}
-\]
+$$\mathbf{q}_1 \otimes \mathbf{q}_2 = \begin{bmatrix} q_{1,0}q_{2,0} - q_{1,1}q_{2,1} - q_{1,2}q_{2,2} - q_{1,3}q_{2,3} \\ q_{1,0}q_{2,1} + q_{1,1}q_{2,0} + q_{1,2}q_{2,3} - q_{1,3}q_{2,2} \\ q_{1,0}q_{2,2} - q_{1,1}q_{2,3} + q_{1,2}q_{2,0} + q_{1,3}q_{2,1} \\ q_{1,0}q_{2,3} + q_{1,1}q_{2,2} - q_{1,2}q_{2,1} + q_{1,3}q_{2,0} \end{bmatrix}$$
 
 **Matrix Form** (useful for computational efficiency):
 
-\[
-\mathbf{q}_1 \otimes \mathbf{q}_2 = \Omega(\mathbf{q}_1)\mathbf{q}_2
-\]
+$$\mathbf{q}_1 \otimes \mathbf{q}_2 = \Omega(\mathbf{q}_1)\mathbf{q}_2$$
 
 Where the left multiplication matrix is:
 
-\[
-\Omega(\mathbf{q}) = \begin{bmatrix}
-q_0 & -q_1 & -q_2 & -q_3 \\
-q_1 & q_0 & -q_3 & q_2 \\
-q_2 & q_3 & q_0 & -q_1 \\
-q_3 & -q_2 & q_1 & q_0
-\end{bmatrix}
-\]
+$$\Omega(\mathbf{q}) = \begin{bmatrix} q_0 & -q_1 & -q_2 & -q_3 \\ q_1 & q_0 & -q_3 & q_2 \\ q_2 & q_3 & q_0 & -q_1 \\ q_3 & -q_2 & q_1 & q_0 \end{bmatrix}$$
 
 **Quaternion Conjugate**:
 
-\[
-\mathbf{q}^* = [q_0, -q_1, -q_2, -q_3]^T
-\]
+$$\mathbf{q}^* = [q_0, -q_1, -q_2, -q_3]^T$$
 
 **Quaternion to Rotation Matrix**:
 
-\[
-\mathbf{R}(\mathbf{q}) = \begin{bmatrix}
-1 - 2(q_2^2 + q_3^2) & 2(q_1q_2 - q_0q_3) & 2(q_1q_3 + q_0q_2) \\
-2(q_1q_2 + q_0q_3) & 1 - 2(q_1^2 + q_3^2) & 2(q_2q_3 - q_0q_1) \\
-2(q_1q_3 - q_0q_2) & 2(q_2q_3 + q_0q_1) & 1 - 2(q_1^2 + q_2^2)
-\end{bmatrix}
-\]
+$$\mathbf{R}(\mathbf{q}) = \begin{bmatrix} 1 - 2(q_2^2 + q_3^2) & 2(q_1q_2 - q_0q_3) & 2(q_1q_3 + q_0q_2) \\ 2(q_1q_2 + q_0q_3) & 1 - 2(q_1^2 + q_3^2) & 2(q_2q_3 - q_0q_1) \\ 2(q_1q_3 - q_0q_2) & 2(q_2q_3 + q_0q_1) & 1 - 2(q_1^2 + q_2^2) \end{bmatrix}$$
 
 ### 1.3 Continuous-Time State Model
 
-**Quaternion Kinematics** (how quaternion evolves with angular velocity):
+**Quaternion Kinematics** (how quaternion evolves with angular velocity):\\
 
-\[
-\dot{\mathbf{q}} = \frac{1}{2}\Omega(\mathbf{q})(\boldsymbol{\omega} - \mathbf{b})
-\]
+$$\dot{\mathbf{q}} = \frac{1}{2}\Omega(\mathbf{q})(\boldsymbol{\omega} - \mathbf{b})$$
 
 Expanded form (component-wise):
 
-\[
-\begin{align}
-\dot{q}_0 &= \frac{1}{2}[-q_1(\omega_x - b_x) - q_2(\omega_y - b_y) - q_3(\omega_z - b_z)] \\
-\dot{q}_1 &= \frac{1}{2}[q_0(\omega_x - b_x) + q_2(\omega_z - b_z) - q_3(\omega_y - b_y)] \\
-\dot{q}_2 &= \frac{1}{2}[q_0(\omega_y - b_y) + q_3(\omega_x - b_x) - q_1(\omega_z - b_z)] \\
-\dot{q}_3 &= \frac{1}{2}[q_0(\omega_z - b_z) + q_1(\omega_y - b_y) - q_2(\omega_x - b_x)]
-\end{align}
-\]
+$$\begin{align} \dot{q}_0 &= \frac{1}{2}[-q_1(\omega_x - b_x) - q_2(\omega_y - b_y) - q_3(\omega_z - b_z)] \\ \dot{q}_1 &= \frac{1}{2}[q_0(\omega_x - b_x) + q_2(\omega_z - b_z) - q_3(\omega_y - b_y)] \\ \dot{q}_2 &= \frac{1}{2}[q_0(\omega_y - b_y) + q_3(\omega_x - b_x) - q_1(\omega_z - b_z)] \\ \dot{q}_3 &= \frac{1}{2}[q_0(\omega_z - b_z) + q_1(\omega_y - b_y) - q_2(\omega_x - b_x)] \end{align}$$
 
 **Gyro Bias Model** (bias evolves as random walk):
 
-\[
-\dot{\mathbf{b}} = \mathbf{0}_{3 \times 1}
-\]
+$$\dot{\mathbf{b}} = \mathbf{0}_{3 \times 1}$$
 
 This assumes the bias is slowly time-varying, modeled as a random walk in the EKF process noise.
 
 ### 1.4 Discrete-Time State Propagation (Prediction Step)
 
-Using **first-order Euler integration** with timestep \(\Delta t\):
+Using **first-order Euler integration** with timestep $\Delta t$:
 
-\[
-\hat{\mathbf{q}}_k^- = \hat{\mathbf{q}}_{k-1}^+ + \Delta t \cdot \dot{\hat{\mathbf{q}}}_{k-1}^+
-\]
+$$\hat{\mathbf{q}}_k^- = \hat{\mathbf{q}}_{k-1}^+ + \Delta t \cdot \dot{\hat{\mathbf{q}}}_{k-1}^+$$
 
-\[
-\hat{\mathbf{b}}_k^- = \hat{\mathbf{b}}_{k-1}^+
-\]
+$$\hat{\mathbf{b}}_k^- = \hat{\mathbf{b}}_{k-1}^+$$
 
 More explicitly, the quaternion update becomes:
 
-\[
-\hat{\mathbf{q}}_k^- = \hat{\mathbf{q}}_{k-1}^+ + \frac{\Delta t}{2}\Omega(\hat{\mathbf{q}}_{k-1}^+)(\boldsymbol{\omega}_k - \hat{\mathbf{b}}_{k-1}^+)
-\]
+$$\hat{\mathbf{q}}_k^- = \hat{\mathbf{q}}_{k-1}^+ + \frac{\Delta t}{2}\Omega(\hat{\mathbf{q}}_{k-1}^+)(\boldsymbol{\omega}_k - \hat{\mathbf{b}}_{k-1}^+)$$
 
 **Normalization** (critical for numerical stability):
 
-\[
-\hat{\mathbf{q}}_k^- \leftarrow \frac{\hat{\mathbf{q}}_k^-}{\|\hat{\mathbf{q}}_k^-\|}
-\]
+$$\hat{\mathbf{q}}_k^- \leftarrow \frac{\hat{\mathbf{q}}_k^-}{\|\hat{\mathbf{q}}_k^-\|}$$
 
 ### 1.5 State Transition Jacobian (Prediction Covariance Update)
 
-The Jacobian \(\mathbf{F}_k\) for EKF linearization:
+The Jacobian $\mathbf{F}_k$ for EKF linearization:
 
-\[
-\mathbf{F}_k = \frac{\partial \mathbf{x}_k}{\partial \mathbf{x}_{k-1}}\bigg|_{\hat{\mathbf{x}}_{k-1}^+}
-\]
+$$\mathbf{F}_k = \frac{\partial \mathbf{x}_k}{\partial \mathbf{x}_{k-1}}\bigg|_{\hat{\mathbf{x}}_{k-1}^+}$$
 
 Breaking into blocks:
 
-\[
-\mathbf{F}_k = \begin{bmatrix}
-\mathbf{F}_{q,q} & \mathbf{F}_{q,b} \\
-\mathbf{0}_{3 \times 4} & \mathbf{I}_{3 \times 3}
-\end{bmatrix}
-\]
+$$\mathbf{F}_k = \begin{bmatrix} \mathbf{F}_{q,q} & \mathbf{F}_{q,b} \\ \mathbf{0}_{3 \times 4} & \mathbf{I}_{3 \times 3} \end{bmatrix}$$
 
-Where \(\mathbf{F}_{q,q}\) comes from quaternion kinematics (4×4):
+Where $\mathbf{F}_{q,q}$ comes from quaternion kinematics (4×4):
 
-\[
-\mathbf{F}_{q,q} = \mathbf{I}_{4 \times 4} + \frac{\Delta t}{2}\Omega_w
-\]
+$$\mathbf{F}_{q,q} = \mathbf{I}_{4 \times 4} + \frac{\Delta t}{2}\Omega_w$$
 
-With \(\Omega_w = \Omega(\boldsymbol{\omega}_k - \hat{\mathbf{b}}_{k-1}^+)\)
+With $\Omega_w = \Omega(\boldsymbol{\omega}_k - \hat{\mathbf{b}}_{k-1}^+)$
 
 And the coupling term (4×3):
 
-\[
-\mathbf{F}_{q,b} = -\frac{\Delta t}{2}\Omega(\hat{\mathbf{q}}_{k-1}^+)
-\]
+$$\mathbf{F}_{q,b} = -\frac{\Delta t}{2}\Omega(\hat{\mathbf{q}}_{k-1}^+)$$
 
 **Covariance Prediction**:
 
-\[
-\mathbf{P}_k^- = \mathbf{F}_k \mathbf{P}_{k-1}^+ \mathbf{F}_k^T + \mathbf{Q}_k
-\]
+$$\mathbf{P}_k^- = \mathbf{F}_k \mathbf{P}_{k-1}^+ \mathbf{F}_k^T + \mathbf{Q}_k$$
 
-Where \(\mathbf{Q}_k\) is the **process noise covariance** (7×7):
+Where $\mathbf{Q}_k$ is the **process noise covariance** (7×7):
 
-\[
-\mathbf{Q}_k = \begin{bmatrix}
-\sigma_q^2 \mathbf{I}_{4 \times 4} & \mathbf{0}_{4 \times 3} \\
-\mathbf{0}_{3 \times 4} & \sigma_b^2 \mathbf{I}_{3 \times 3}
-\end{bmatrix}
-\]
+$$\mathbf{Q}_k = \begin{bmatrix} \sigma_q^2 \mathbf{I}_{4 \times 4} & \mathbf{0}_{4 \times 3} \\ \mathbf{0}_{3 \times 4} & \sigma_b^2 \mathbf{I}_{3 \times 3} \end{bmatrix}$$
 
-Typical values: \(\sigma_q \approx 10^{-4}\), \(\sigma_b \approx 10^{-6}\)
+Typical values: $\sigma_q \approx 10^{-4}$, $\sigma_b \approx 10^{-6}$
 
 ---
 
@@ -175,58 +112,38 @@ Typical values: \(\sigma_q \approx 10^{-4}\), \(\sigma_b \approx 10^{-6}\)
 
 **Physical principle**: In the inertial frame, acceleration measured by accelerometer should equal gravity:
 
-\[
-\mathbf{a}_{measured} = \mathbf{R}(\mathbf{q}) \mathbf{g}_{body} + \mathbf{n}_a
-\]
+$$\mathbf{a}_{measured} = \mathbf{R}(\mathbf{q}) \mathbf{g}_{body} + \mathbf{n}_a$$
 
 Where:
-- \(\mathbf{g}_{body}\) = normalized gravity in body frame (approximately [0, 0, -g] for stationary)
-- \(\mathbf{n}_a\) = accelerometer measurement noise
-- \(\mathbf{R}(\mathbf{q})\) = rotation matrix from quaternion
+- $\mathbf{g}_{body}$ = normalized gravity in body frame (approximately [0, 0, -g] for stationary)
+- $\mathbf{n}_a$ = accelerometer measurement noise
+- $\mathbf{R}(\mathbf{q})$ = rotation matrix from quaternion
 
 **Observation function**:
 
-\[
-\mathbf{z}_{acc,k} = \mathbf{h}_{acc}(\mathbf{x}_k) = \mathbf{R}(\mathbf{q}_k) \begin{bmatrix} 0 \\ 0 \\ -9.81 \end{bmatrix} + \mathbf{n}_a
-\]
+$$\mathbf{z}_{acc,k} = \mathbf{h}_{acc}(\mathbf{x}_k) = \mathbf{R}(\mathbf{q}_k) \begin{bmatrix} 0 \\ 0 \\ -9.81 \end{bmatrix} + \mathbf{n}_a$$
 
 In expanded form (using rotation matrix elements):
 
-\[
-\begin{align}
-z_{acc,x} &= 9.81 \cdot 2(q_1q_3 - q_0q_2) + n_{a,x} \\
-z_{acc,y} &= 9.81 \cdot 2(q_2q_3 + q_0q_1) + n_{a,y} \\
-z_{acc,z} &= 9.81(1 - 2(q_1^2 + q_2^2)) + n_{a,z}
-\end{align}
-\]
+$$\begin{align} z_{acc,x} &= 9.81 \cdot 2(q_1q_3 - q_0q_2) + n_{a,x} \\ z_{acc,y} &= 9.81 \cdot 2(q_2q_3 + q_0q_1) + n_{a,y} \\ z_{acc,z} &= 9.81(1 - 2(q_1^2 + q_2^2)) + n_{a,z} \end{align}$$
 
 ### 2.2 Observation Jacobian for Accelerometer
 
 The Jacobian is the partial derivative with respect to state:
 
-\[
-\mathbf{H}_{acc} = \frac{\partial \mathbf{h}_{acc}}{\partial \mathbf{x}}\bigg|_{\hat{\mathbf{x}}_k^-}
-\]
+$$\mathbf{H}_{acc} = \frac{\partial \mathbf{h}_{acc}}{\partial \mathbf{x}}\bigg|_{\hat{\mathbf{x}}_k^-}$$
 
 Taking derivatives of the observation function:
 
-\[
-\mathbf{H}_{acc} = g \begin{bmatrix}
--2q_2 & -2q_3 & 2q_0 & 2q_1 & 0 & 0 & 0 \\
-2q_1 & 2q_0 & 2q_3 & -2q_2 & 0 & 0 & 0 \\
--4q_1 & -4q_2 & 0 & 0 & 0 & 0 & 0
-\end{bmatrix}
-\]
+$$\mathbf{H}_{acc} = g \begin{bmatrix} -2q_2 & -2q_3 & 2q_0 & 2q_1 & 0 & 0 & 0 \\ 2q_1 & 2q_0 & 2q_3 & -2q_2 & 0 & 0 & 0 \\ -4q_1 & -4q_2 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}$$
 
-Where this is evaluated at predicted state \(\hat{\mathbf{x}}_k^-\).
+Where this is evaluated at predicted state $\hat{\mathbf{x}}_k^-$.
 
 ### 2.3 Measurement Noise Covariance
 
-\[
-\mathbf{R}_{acc} = \sigma_{acc}^2 \mathbf{I}_{3 \times 3}
-\]
+$$\mathbf{R}_{acc} = \sigma_{acc}^2 \mathbf{I}_{3 \times 3}$$
 
-Typical accelerometer noise: \(\sigma_{acc} \approx 0.05\) m/s²
+Typical accelerometer noise: $\sigma_{acc} \approx 0.05$ m/s²
 
 ---
 
@@ -234,45 +151,31 @@ Typical accelerometer noise: \(\sigma_{acc} \approx 0.05\) m/s²
 
 ### 3.1 Innovation (Measurement Residual)
 
-\[
-\boldsymbol{\gamma}_k = \mathbf{z}_{acc,k} - \mathbf{h}_{acc}(\hat{\mathbf{x}}_k^-)
-\]
+$$\boldsymbol{\gamma}_k = \mathbf{z}_{acc,k} - \mathbf{h}_{acc}(\hat{\mathbf{x}}_k^-)$$
 
 ### 3.2 Innovation Covariance
 
-\[
-\mathbf{S}_k = \mathbf{H}_{acc} \mathbf{P}_k^- \mathbf{H}_{acc}^T + \mathbf{R}_{acc}
-\]
+$$\mathbf{S}_k = \mathbf{H}_{acc} \mathbf{P}_k^- \mathbf{H}_{acc}^T + \mathbf{R}_{acc}$$
 
 ### 3.3 Kalman Gain
 
-\[
-\mathbf{K}_k = \mathbf{P}_k^- \mathbf{H}_{acc}^T \mathbf{S}_k^{-1}
-\]
+$$\mathbf{K}_k = \mathbf{P}_k^- \mathbf{H}_{acc}^T \mathbf{S}_k^{-1}$$
 
 ### 3.4 State Update
 
-\[
-\hat{\mathbf{x}}_k^+ = \hat{\mathbf{x}}_k^- + \mathbf{K}_k \boldsymbol{\gamma}_k
-\]
+$$\hat{\mathbf{x}}_k^+ = \hat{\mathbf{x}}_k^- + \mathbf{K}_k \boldsymbol{\gamma}_k$$
 
 **Special handling for quaternion**: After update, re-normalize:
 
-\[
-\hat{\mathbf{q}}_k^+ \leftarrow \frac{\hat{\mathbf{q}}_k^+}{\|\hat{\mathbf{q}}_k^+\|}
-\]
+$$\hat{\mathbf{q}}_k^+ \leftarrow \frac{\hat{\mathbf{q}}_k^+}{\|\hat{\mathbf{q}}_k^+\|}$$
 
 ### 3.5 Covariance Update
 
-\[
-\mathbf{P}_k^+ = (\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})\mathbf{P}_k^-
-\]
+$$\mathbf{P}_k^+ = (\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})\mathbf{P}_k^-$$
 
 Or the Joseph form (more numerically stable):
 
-\[
-\mathbf{P}_k^+ = (\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})\mathbf{P}_k^-(\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})^T + \mathbf{K}_k \mathbf{R}_{acc} \mathbf{K}_k^T
-\]
+$$\mathbf{P}_k^+ = (\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})\mathbf{P}_k^-(\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})^T + \mathbf{K}_k \mathbf{R}_{acc} \mathbf{K}_k^T$$
 
 ---
 
@@ -282,39 +185,21 @@ Or the Joseph form (more numerically stable):
 
 From initial accelerometer reading (assuming static):
 
-\[
-\mathbf{a}_{init} = [a_x, a_y, a_z]^T
-\]
+$$\mathbf{a}_{init} = [a_x, a_y, a_z]^T$$
 
 Compute roll and pitch:
 
-\[
-\phi = \arctan2(a_y, -a_z)
-\]
+$$\phi = \arctan2(a_y, -a_z)$$
 
-\[
-\theta = \arctan2(a_x, \sqrt{a_y^2 + a_z^2})
-\]
+$$\theta = \arctan2(a_x, \sqrt{a_y^2 + a_z^2})$$
 
 Convert to quaternion:
 
-\[
-\begin{align}
-q_0 &= \cos(\phi/2)\cos(\theta/2) \\
-q_1 &= \sin(\phi/2)\cos(\theta/2) \\
-q_2 &= \cos(\phi/2)\sin(\theta/2) \\
-q_3 &= \sin(\phi/2)\sin(\theta/2)
-\end{align}
-\]
+$$\begin{align} q_0 &= \cos(\phi/2)\cos(\theta/2) \\ q_1 &= \sin(\phi/2)\cos(\theta/2) \\ q_2 &= \cos(\phi/2)\sin(\theta/2) \\ q_3 &= \sin(\phi/2)\sin(\theta/2) \end{align}$$
 
 ### 4.2 Covariance Initialization
 
-\[
-\mathbf{P}_0^+ = \begin{bmatrix}
-0.1^2 \mathbf{I}_{4 \times 4} & \mathbf{0}_{4 \times 3} \\
-\mathbf{0}_{3 \times 4} & 0.01^2 \mathbf{I}_{3 \times 3}
-\end{bmatrix}
-\]
+$$\mathbf{P}_0^+ = \begin{bmatrix} 0.1^2 \mathbf{I}_{4 \times 4} & \mathbf{0}_{4 \times 3} \\ \mathbf{0}_{3 \times 4} & 0.01^2 \mathbf{I}_{3 \times 3} \end{bmatrix}$$
 
 ---
 
@@ -325,18 +210,18 @@ q_3 &= \sin(\phi/2)\sin(\theta/2)
 1. **Prediction Phase** (using gyroscope at high frequency):
    - Update quaternion using kinematics equation
    - Normalize quaternion
-   - Compute state Jacobian \(\mathbf{F}_k\)
-   - Propagate covariance: \(\mathbf{P}_k^- = \mathbf{F}_k \mathbf{P}_{k-1}^+ \mathbf{F}_k^T + \mathbf{Q}_k\)
+   - Compute state Jacobian $\mathbf{F}_k$
+   - Propagate covariance: $\mathbf{P}_k^- = \mathbf{F}_k \mathbf{P}_{k-1}^+ \mathbf{F}_k^T + \mathbf{Q}_k$
 
 2. **Update Phase** (when accelerometer measurement arrives, lower frequency):
-   - Compute predicted accelerometer measurement: \(\hat{\mathbf{a}}_k^- = \mathbf{h}_{acc}(\hat{\mathbf{x}}_k^-)\)
-   - Compute observation Jacobian: \(\mathbf{H}_{acc}\)
-   - Compute innovation: \(\boldsymbol{\gamma}_k = \mathbf{a}_{measured} - \hat{\mathbf{a}}_k^-\)
-   - Compute innovation covariance: \(\mathbf{S}_k = \mathbf{H}_{acc} \mathbf{P}_k^- \mathbf{H}_{acc}^T + \mathbf{R}_{acc}\)
-   - Compute Kalman gain: \(\mathbf{K}_k = \mathbf{P}_k^- \mathbf{H}_{acc}^T \mathbf{S}_k^{-1}\)
-   - Update state: \(\hat{\mathbf{x}}_k^+ = \hat{\mathbf{x}}_k^- + \mathbf{K}_k \boldsymbol{\gamma}_k\)
+   - Compute predicted accelerometer measurement: $\hat{\mathbf{a}}_k^- = \mathbf{h}_{acc}(\hat{\mathbf{x}}_k^-)$
+   - Compute observation Jacobian: $\mathbf{H}_{acc}$
+   - Compute innovation: $\boldsymbol{\gamma}_k = \mathbf{a}_{measured} - \hat{\mathbf{a}}_k^-$
+   - Compute innovation covariance: $\mathbf{S}_k = \mathbf{H}_{acc} \mathbf{P}_k^- \mathbf{H}_{acc}^T + \mathbf{R}_{acc}$
+   - Compute Kalman gain: $\mathbf{K}_k = \mathbf{P}_k^- \mathbf{H}_{acc}^T \mathbf{S}_k^{-1}$
+   - Update state: $\hat{\mathbf{x}}_k^+ = \hat{\mathbf{x}}_k^- + \mathbf{K}_k \boldsymbol{\gamma}_k$
    - Normalize quaternion in updated state
-   - Update covariance: \(\mathbf{P}_k^+ = (\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})\mathbf{P}_k^-\)
+   - Update covariance: $\mathbf{P}_k^+ = (\mathbf{I}_7 - \mathbf{K}_k \mathbf{H}_{acc})\mathbf{P}_k^-$
 
 ---
 
@@ -483,8 +368,6 @@ class QuaternionEKF:
         """
         Convert quaternion to 3x3 rotation matrix.
         
-        R = I + 2*qw*[qv]_x + 2*[qv]_x^2
-        
         Args:
             q: Quaternion [q0, q1, q2, q3]
             
@@ -595,14 +478,11 @@ class QuaternionEKF:
         H = np.zeros((3, 7))
         
         # Derivatives of g_body = R^T * g_inertial with respect to q
-        # This requires the derivative of rotation matrix w.r.t. quaternion
-        q0, q1, q2, q3 = q
-        
-        # dR/dq0, dR/dq1, dR/dq2, dR/dq3 and then multiply by g_inertial
         # Using: g_body = R^T * [0, 0, g] = [2*g*(q1*q3 - q0*q2), 
         #                                      2*g*(q2*q3 + q0*q1), 
         #                                      g*(1 - 2*(q1^2 + q2^2))]
         
+        q0, q1, q2, q3 = q
         g = self.config.g
         
         H[0, 0] = -2 * g * q2  # ∂(g_body_x)/∂q0
@@ -786,8 +666,8 @@ if __name__ == "__main__":
 ### 7.1 Numerical Stability
 
 1. **Quaternion Normalization**: Always normalize after integration and update
-2. **Covariance Symmetry**: Enforce P = 0.5*(P + P^T) after each update
-3. **Positive Definiteness**: Check eigenvalues of P remain positive
+2. **Covariance Symmetry**: Enforce $\mathbf{P} = 0.5(\mathbf{P} + \mathbf{P}^T)$ after each update
+3. **Positive Definiteness**: Check eigenvalues of $\mathbf{P}$ remain positive
 
 ### 7.2 Parameter Tuning
 
